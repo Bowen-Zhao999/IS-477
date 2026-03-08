@@ -19,7 +19,19 @@ Both group mates are responsible for brainstorming the research questions and da
 
 In the end of 2019 and the start of 2020, the outbreak of COVID-19 has fundamentally changed the world for individuals, companies, and countries. As a biological incident, the coronavirus's impact on pharmaceutical companies capture the interests of our group. We are curious as the threat of COVID-19 became more evident and dreadful, how did this change impacted the performance of pharmaceutical companies. Considering the scope of this course, we formed our research question as:
 
-> ***What is the relationship between the stock prices of pharmaceutical companies from Jan. 1, 2020 to Jan. 1, 2021 and the number of confirmed cases and death of COVID-19?***
+> ***What is the relationship between the stock prices of pharmaceutical companies from Jan. 1, 2021 to Jan. 1, 2022 and the number of confirmed cases and death of COVID-19 in the U.S.?***
+
+## Dataset
+
+Two datasets are used in this project: the COVID-19 dataset by John Hopkins University and the stock prices dataset by yfinance.
+
+1. **COVID-19 Data Repository by the Center for Systems Science and Engineering (CSSE) at Johns Hopkins University**
+
+    This dataset is created by the CSSE at John Hopkins University by gathering information released by official state outlet channels. It contains key fields like update date, country/region, confirmed cases number and death cases number of COVID-19 on a daily basis. 
+2. **yfinance**
+
+    yfinance is an open-source tool that uses Yahoo's publicly available API to collect data from Yahoo's finance sector. yfinance will be used to generate historical data for trading stocks. Fields like data, openning price, closing price, high price, low price of the interested stocks will be available. 
+
 
 
 ## Timeline
