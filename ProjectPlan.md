@@ -2,6 +2,11 @@
 
 This document serves as the document plan outlining Team, Research Question, Dataset, Timeline, Constraints, Gaps of the project. 
 
+## Overview
+This project investigates the intersection of public health crises and capital markets by analyzing the relationship between COVID-19 severity and the financial performance of the U.S. pharmaceutical sector from January 1, 2021, to January 1, 2022.
+
+To achieve this, we will develop a unified analytical pipeline that integrates high-resolution health data from the Johns Hopkins COVID-19 repository with financial time-series data extracted via the yfinance API. The technical execution will involve using SQL for robust data relational mapping and Python libraries, specifically Pandas, for complex data wrangling and feature engineering. Furthermore, we will implement machine learning models using scikit-learn to identify predictive patterns and quantify the sensitivity of pharmaceutical stocks to pandemic-driven news cycles.
+
 
 
 ## Team
