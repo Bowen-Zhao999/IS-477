@@ -11,9 +11,15 @@ This document serves as the document plan outlining Team, Research Question, Dat
 
 2. **Bowen Zhao**
 
-    Bowen Zhao is responsible for data analysis including numeric results and visualizations based on the research question. After the analysis, he would also be responsible for a breif discussion about the lessons learned from the data analysis and potential future work. He will also be responsible for describing challenges encountered during the process.
+    Bowen Zhao is responsible for data analysis including numeric results and visualizations based on the research question. After the analysis, he would also be responsible for a brief discussion about the lessons learned from the data analysis and potential future work. He will also be responsible for describing challenges encountered during the process.
 
-Both groupmates are responsible for brainstroming the research questions and dataset finding. 
+Both group mates are responsible for brainstorming the research questions and dataset finding. 
+
+## Research Question
+
+In the end of 2019 and the start of 2020, the outbreak of COVID-19 has fundamentally changed the world for individuals, companies, and countries. As a biological incident, the coronavirus's impact on pharmaceutical companies capture the interests of our group. We are curious as the threat of COVID-19 became more evident and dreadful, how did this change impacted the performance of pharmaceutical companies. Considering the scope of this course, we formed our research question as:
+
+> ***What is the relationship between the stock prices of pharmaceutical companies from Jan. 1, 2020 to Jan. 1, 2021 and the number of confirmed cases and death of COVID-19?***
 
 
 ## Timeline
@@ -38,7 +44,7 @@ Both groupmates are responsible for brainstroming the research questions and dat
 
 ## Constraints 
 
-The datasets we found are Covid-19's impact on population of different countries and stock price changes of major health firms. The constraints of the Covid-19 data is the difficulty of combining the datasets. This is becasue that it is a collection of daily record of population, and therefore we would need to combine all the different datasets of our desired timeframe. In addition, since we are only interested in United States, there will be some data filtering work needs to be done and we have to make sure that all United States data are kept, including those that are expressed as "US / U.S. / united states", etc. Also, although we are able to view the stock price data online and retrieve it using an open source library called "yFinance", we are not able to retrieve the raw dataframe using a free account. Therefore, we will only be able to clean and view the data using data analysis technique. 
+The datasets we found are Covid-19's impact on population of different countries and stock price changes of major health firms. The constraints of the Covid-19 data is the difficulty of combining the datasets. This is because that it is a collection of daily record of population, and therefore we would need to combine all the different datasets of our desired timeframe. In addition, since we are only interested in United States, there will be some data filtering work needs to be done and we have to make sure that all United States data are kept, including those that are expressed as "US / U.S. / united states", etc. Also, although we are able to view the stock price data online and retrieve it using an open source library called "yFinance", we are not able to retrieve the raw dataframe using a free account. Therefore, we will only be able to clean and view the data using data analysis technique. 
 
 ## Gaps
 A limitation of this project is that the COVID-19 data used is aggregated at the country level rather than focusing on specific regions within the United States. Because of this, the analysis may produce conclusions that are relatively broad and may not accurately reflect regional differences such as variations in public health policies, population density, healthcare capacity, or vaccination rates. These regional factors can significantly influence both the spread of COVID-19 and its economic impact, meaning that important localized dynamics may be overlooked in the findings.
