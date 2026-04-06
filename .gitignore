@@ -416,3 +416,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+
+# preview files
+_output/
+*_files/
+.DS_Store
