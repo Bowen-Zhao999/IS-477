@@ -422,3 +422,5 @@ FodyWeavers.xsd
 _output/
 *_files/
 .DS_Store
+
+/.quarto/
