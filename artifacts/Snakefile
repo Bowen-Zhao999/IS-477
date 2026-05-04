@@ -1,0 +1,177 @@
+# =====================================================================
+# Snakefile: COVID-19 / Pharmaceutical Stock Analysis Pipeline
+# =====================================================================
+# End-to-end DAG:
+#
+#   csse CSVs ─▶ load_covid ─▶ clean_covid ──┐
+#                                            ├─▶ integrate ─▶ features ─┬─▶ analyze
+#   yfinance ─▶ fetch_stocks (per ticker) ───┘                          └─▶ visualize
+#
+# Run from the project root:
+#     snakemake --cores 1
+#
+# Useful targets:
+#     snakemake -np                   # dry-run, see what would execute
+#     snakemake --dag | dot -Tpng > dag.png
+#     snakemake --forceall --cores 1  # rebuild everything from scratch
+# =====================================================================
+
+configfile: "config/config.yaml"
+
+# ---- Convenience aliases -------------------------------------------------
+TICKERS    = config["tickers"]
+PROC_DIR   = config["data_processed_dir"]
+RES_DIR    = config["results_dir"]
+FIG_DIR    = config["figures_dir"]
+ANA_DIR    = config["analysis_dir"]
+
+# Final outputs the workflow must produce
+rule all:
+    input:
+        f"{ANA_DIR}/regression_results.csv",
+        expand(f"{ANA_DIR}/ols_{{ticker}}.txt", ticker=TICKERS),
+        f"{FIG_DIR}/stocks_vs_cases.png",
+        f"{PROC_DIR}/features.csv",
+
+
+# ---- 1. Load raw COVID daily reports -------------------------------------
+rule load_covid:
+    input:
+        folder = config["covid_raw_folder"],
+    output:
+        f"{PROC_DIR}/covid_raw_combined.csv",
+    params:
+        year = config["year_filter"],
+    log:
+        "logs/01_load_covid.log",
+    shell:
+        "python scripts/01_load_covid.py "
+        "  --input-folder {input.folder} "
+        "  --year {params.year} "
+        "  --output {output} "
+        "  > {log} 2>&1"
+
+
+# ---- 2. Clean & aggregate COVID to national daily series -----------------
+rule clean_covid:
+    input:
+        f"{PROC_DIR}/covid_raw_combined.csv",
+    output:
+        state = f"{PROC_DIR}/covid_state_daily.csv",
+        us    = f"{PROC_DIR}/covid_us_daily.csv",
+    log:
+        "logs/02_clean_covid.log",
+    shell:
+        "python scripts/02_clean_covid.py "
+        "  --input {input} "
+        "  --output-state {output.state} "
+        "  --output-us {output.us} "
+        "  > {log} 2>&1"
+
+
+# ---- 3. Fetch one ticker's stock data via yfinance -----------------------
+# Snakemake fans this out to one job per ticker via `expand` below.
+rule fetch_stock:
+    output:
+        f"{PROC_DIR}/stock_{{ticker}}.csv",
+    params:
+        start = config["start_date"],
+        end   = config["end_date"],
+    log:
+        "logs/03_fetch_stock_{ticker}.log",
+    shell:
+        "python scripts/03_fetch_stocks.py "
+        "  --ticker {wildcards.ticker} "
+        "  --start {params.start} "
+        "  --end {params.end} "
+        "  --output {output} "
+        "  > {log} 2>&1"
+
+
+# ---- 4. Integrate COVID + all stocks via next-trading-day mapping --------
+rule integrate:
+    input:
+        covid  = f"{PROC_DIR}/covid_us_daily.csv",
+        stocks = expand(f"{PROC_DIR}/stock_{{ticker}}.csv", ticker=TICKERS),
+    output:
+        f"{PROC_DIR}/integrated.csv",
+    log:
+        "logs/04_integrate.log",
+    shell:
+        "python scripts/04_integrate.py "
+        "  --covid-us {input.covid} "
+        "  --stocks {input.stocks} "
+        "  --output {output} "
+        "  > {log} 2>&1"
+
+
+# ---- 5. Build engineered features ---------------------------------------
+rule features:
+    input:
+        f"{PROC_DIR}/integrated.csv",
+    output:
+        f"{PROC_DIR}/features.csv",
+    params:
+        inf_w = config["infection_window"],
+        mor_w = config["mortality_window"],
+        inf_a = config["infection_weight"],
+        mor_a = config["mortality_weight"],
+        tickers = " ".join(TICKERS),
+    log:
+        "logs/05_features.log",
+    shell:
+        "python scripts/05_feature_engineering.py "
+        "  --input {input} "
+        "  --output {output} "
+        "  --infection-window {params.inf_w} "
+        "  --mortality-window {params.mor_w} "
+        "  --infection-weight {params.inf_a} "
+        "  --mortality-weight {params.mor_a} "
+        "  --tickers {params.tickers} "
+        "  > {log} 2>&1"
+
+
+# ---- 6. OLS regressions per ticker --------------------------------------
+rule analyze:
+    input:
+        f"{PROC_DIR}/features.csv",
+    output:
+        csv      = f"{ANA_DIR}/regression_results.csv",
+        per_tick = expand(f"{ANA_DIR}/ols_{{ticker}}.txt", ticker=TICKERS),
+    params:
+        tickers = " ".join(TICKERS),
+        outdir  = ANA_DIR,
+    log:
+        "logs/06_analyze.log",
+    shell:
+        "python scripts/06_analyze.py "
+        "  --input {input} "
+        "  --tickers {params.tickers} "
+        "  --output-dir {params.outdir} "
+        "  --output-csv {output.csv} "
+        "  > {log} 2>&1"
+
+
+# ---- 7. Visualization ---------------------------------------------------
+rule visualize:
+    input:
+        f"{PROC_DIR}/features.csv",
+    output:
+        f"{FIG_DIR}/stocks_vs_cases.png",
+    params:
+        tickers = " ".join(TICKERS),
+    log:
+        "logs/07_visualize.log",
+    shell:
+        "python scripts/07_visualize.py "
+        "  --input {input} "
+        "  --tickers {params.tickers} "
+        "  --output {output} "
+        "  > {log} 2>&1"
+
+
+# ---- Convenience: wipe all generated artifacts --------------------------
+rule clean:
+    shell:
+        "rm -rf {PROC_DIR}/*.csv {RES_DIR}/figures/*.png "
+        "{RES_DIR}/analysis/*.csv {RES_DIR}/analysis/*.txt logs/*.log"

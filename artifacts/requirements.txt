@@ -1,0 +1,8 @@
+pandas>=2.0
+numpy>=1.24
+matplotlib>=3.7
+seaborn>=0.12
+yfinance>=0.2.40
+statsmodels>=0.14
+snakemake>=7.32
+pyyaml>=6.0
