@@ -150,7 +150,11 @@ Future Direction: Future iterations should include macroeconomic indicators (suc
 
 
 ## Challenges: [~500 words] Discuss the main challenges you encountered while working on the project.
-
+1. aggregate data: many datasets need to be joined
+2. data cleaning: holiday will close (stock market) so we need to combine holidays to the next modnay
+3. When we constructing index, we need to use moving averages to reduce noise in dataset; convert moving average to z scores so that we can use it to compare w/ other feature
+4. we need to convert stock price into daily changee, so that it reflect how COVID is impacting the performance of phymsitical companies
+5. Our regression model is not as expected and we need to take that into consideration and interpreted. 
 
 
 ## Reproducing: Sequence of steps required for someone else to reproduce your results.
