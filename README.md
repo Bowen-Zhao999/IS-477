@@ -95,6 +95,25 @@ Overall, the datasets are of high quality and high fidelity. The yfinance data p
 
 ## Data cleaning: [max 1000 words] Summarize the data cleaning operations you performed and explain how each operation addressed specific data quality issues in your datasets.
 
+Our data cleaning process was executed entirely in python, utilizing a robust pipeline to transform raw, fragmented health reports and financial APIs into a refined analytical dataset. The following operations were performed to address specific structural and qualitative issues:
+
+1. Longitudinal Integration of COVID-19 Data
+The JHU COVID-19 repository stores data as individual daily snapshots. To create a usable timeline, we utilized the os library to iterate through the directory, filtering specifically for files containing "2021." We read each CSV into a list of DataFrames and used pd.concat() to merge them into a single global 2021 master file. For the issues address, we solved the data fragmentation issue, transforming hundreds of isolated files into a continuous longitudinal time-series.
+
+2. Temporal Standardization and Delta Calculations
+The raw JHU data provides cumulative totals, which are unsuitable for analyzing daily market volatility. We converted the `Date` column to `datetime` objects and sorted by `Province_State` and `Date`. We then applied `.groupby('Province_State').diff()` to the `Confirmed` and `Deaths` columns to generate `New_Confirmed` and `New_Deaths`. This corrected the cumulative bias. By calculating the daily "delta," we were able to measure the actual velocity of the pandemic rather than just the total volume, which is essential for correlation with daily stock returns.
+
+3. National Aggregation and Logical Clipping
+After calculating state-level changes, we needed a unified U.S. metric to compare against national stock exchanges. We grouped the data by `Date` and summed the new cases/deaths. Furthermore, we used `.clip(lower=0)` on the resulting columns. This addressed geospatial granularity and reporting anomalies. Occasionally, state-level adjustments resulted in negative daily values; "clipping" ensured that our model wasn't skewed by nonsensical negative infection counts.
+
+4. Market-Syncing (The "Next Trading Day" Logic)
+A critical challenge was that COVID-19 data is reported 7 days a week, while stock markets only operate on business days. We defined a custom function, `assign_trading_day`, which mapped weekend health metrics to the next available trading date. We then re-aggregated the COVID-19 stats based on these trading windows and used an `inner merge` to join with the `yfinance` data. This solved the temporal misalignment(the "weekend gap"). Instead of simply dropping weekend health data, we consolidated it into the Monday market open, reflecting how investors actually process news that accumulates over a weekend.
+
+5. Normalization and Feature Engineering
+To prepare the data for the Ordinary Least Squares (OLS) regression models seen in the final code blocks, we had to normalize different scales. Our tasks involves, calculating 7-day and 14-day rolling means to smooth out reporting "noise" (weekend lags). We also converted infection and mortality rates into Z-scores (`Infection_Z`, `Mortality_Z`). We then created a weighted feature ($0.3 \times \text{Infection} + 0.7 \times \text{Mortality}$) to provide a single metric of pandemic "dread.", and we converted raw stock prices into `pct_change()` (returns). These operations addressed variance and scale disparity. By converting raw numbers into standardized indices and percentage returns, we ensured that the regression model would not be biased toward variables with larger raw magnitudes (like total cases) over smaller ones (like stock price changes).
+
+6. Handling Missing Financial Data
+In the final stages, we audited the merged dataset for remaining nulls. We used `.dropna()` specifically on our feature set (`Severity_Index`, `Infection_Momentum`) before fitting the OLS model. This ensured mathematical validity for our statistical models, as scikit-learn and statsmodels cannot process `NaN` values during regression fitting.
 
 
 ## Findings: [~500 words] Description of any findings including numeric results and/or visualizations.
@@ -102,7 +121,32 @@ Overall, the datasets are of high quality and high fidelity. The yfinance data p
 
 
 ## Future work: [~500-1000 words] Brief discussion of any lessons learned and potential future work.
+While our current model provides a strong foundation using OLS regression and basic feature engineering, there are several ways to expand this research to provide a more granular understanding of the market's mechanics.
 
+1. Sentiment Analysis and the "News Cycle" Gap
+Our current analysis relies on quantitative health metrics (cases and deaths) as a proxy for the pandemic's severity. However, market volatility is often driven as much by perception as by reality.
+
+Future Direction: A logical next step would be to integrate Natural Language Processing (NLP). By scraping headlines from financial news outlets (e.g., Bloomberg, Reuters) or social media (Twitter/X) and performing sentiment analysis, we could quantify the "fear index" of the market. This would allow us to see if a negative news cycle about a vaccine's efficacy has a more immediate impact on stock prices than the actual mortality rates reported by JHU.
+
+2. Expanding the Ticker Universe
+Currently, our study focuses on three major players: CVS, JNJ, and ABBV. While these are representative, they do not capture the full diversity of the healthcare sector.
+
+Future Direction: Future work should include a wider array of firms, categorized by their role in the pandemic. We could compare "Vaccine Pioneers" (Moderna, Pfizer) against "Equipment Providers" (Thermo Fisher, Danaher) and "Traditional Providers" (UnitedHealth). Using a Clustering Algorithm could help identify which sub-sectors were most resilient and which were most sensitive to specific pandemic milestones.
+
+3. Global Comparative Analysis
+The scope of this project was intentionally limited to the United States. However, the pharmaceutical industry is global, and different countries had vastly different regulatory responses and vaccination timelines.
+
+Future Direction: We could expand the dataset to include the European (EMA) and Asian markets. Comparing the sensitivity of the FTSE 100 or DAX pharmaceutical stocks against the S&P 500 would reveal how different government intervention strategies (e.g., lockdowns vs. early vaccine mandates) impacted investor confidence across borders.
+
+4. Advanced Predictive Modeling
+Our current project uses regression to find relationships. While useful for finding correlation, it is less effective at forecasting.
+
+Future Direction: We would like to implement Long Short-Term Memory (LSTM) neural networks. LSTMs are specifically designed for time-series forecasting and could potentially identify non-linear patterns that OLS regression misses. By feeding the model historical case data, policy change dates, and stock returns, we could attempt to build a "Crisis Stress-Test" model to predict how healthcare stocks might behave in the early stages of a future pandemic.
+
+5. Incorporating Macroeconomic Covariates
+As noted in our research gaps, stock prices are influenced by more than just health data—inflation, interest rates, and government stimulus all played a role in 2021.
+
+Future Direction: Future iterations should include macroeconomic indicators (such as the 10-year Treasury yield or the Consumer Price Index) as control variables. This would allow us to isolate the "COVID effect" from the "Stimulus effect," providing a much cleaner look at the true sensitivity of the pharmaceutical sector to biological threats.
 
 
 ## Challenges: [~500 words] Discuss the main challenges you encountered while working on the project.
