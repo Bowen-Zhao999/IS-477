@@ -21,7 +21,7 @@ The execution required some data engineering. To acheive this, we employed SQL f
 
 **Findings and Gaps**
 - PLACEHOLDER FOR UNFINISHED FINDING PART!!!
-> *Our analysis revealed a nuanced correlation. While a general upward trend in pharmaceutical valuation mirrored the periods of increased case counts, the market often displayed a more forward-looking behavior. While stock prices frequently surged in anticipation of FDA approvals or trial results, sometimes decoupled from the immediate daily death rates. This observation from the data suggested that while health crises drive sector interest, market sentiment is more sensitive to solutions such as vaccines, than to the problems like infection themselves.*
+We constructed three OLS regression models using daily stock returns as the dependent variable and three pandemic-related metrics as independent variables: `Severity_Index`, `Infection_Momentum`, and `Mortality_Momentum`. The results across all three companies reveal that COVID-19 metrics have very limited explanatory power on daily stock returns.
 
 However, the study has some constraints. The reliance on country-level aggregated data created a regional gap, which obscured how localized policy between states shifts or vaccination rates in specific states could have influenced broader market trends. In addition, we identified a gap that, while correlations exist, they are influenced by latent variables such as government stimulus packages and broader shifts in interest rates.
 
@@ -178,6 +178,39 @@ Future Direction: Future iterations should include macroeconomic indicators (suc
 
 
 ## Reproducing: Sequence of steps required for someone else to reproduce your results.
+## Reproducing the Results
+
+Here are the seqence to reproduce the results
+
+- Prerequisites and Environment Setup
+Before starting, ensure you have a Python environment (3.8 or higher) ready. You will need to install the following libraries via `pip`:
+* `pandas` and `numpy` for data manipulation.
+* `yfinance` to pull market data.
+* `statsmodels` for the regression analysis.
+* `matplotlib` and `seaborn` for generating the visualizations.
+
+- Gathering the Raw Data
+* **Health Data:** Download the `csse_covid_19_daily_reports_us` folder from the Johns Hopkins University GitHub repository. We specifically filtered for files with "2021" in the filename.
+* **Stock Data:** Use the `yfinance` library to download historical data for tickers **"CVS"**, **"JNJ"**, and **"ABBV"** with a start date of `2021-01-01` and an end date of `2022-01-01`.
+
+- The Cleaning Pipeline
+The most critical part of reproducing our results is the way the data is cleaned. Follow these steps in order:
+1.  **Merging Files:** Use `os.listdir` to loop through the JHU folder, append all 2021 CSVs into a list, and use `pd.concat` to create one big master dataframe.
+2.  **Calculating New Cases:** Since the raw data is cumulative, you must sort by `Province_State` and `Date`, then use `.groupby().diff()` to find the actual **daily** new cases and deaths. 
+3.  **National Totals:** Group by the `Date` column and `.sum()` the values to get a single daily count for the entire United States. Use `.clip(lower=0)` to fix any negative numbers caused by state reporting adjustments.
+
+- 4. Syncing the Datasets (The "Weekend Gap")
+Because the virus spreads every day but the stock market closes on weekends, you cannot do a simple join.
+* Define a function (`assign_trading_day`) that looks at a COVID date and finds the **next available** trading date. 
+* Re-aggregate your COVID numbers based on these trading days so that weekend virus data is "captured" and moved to the following Monday.
+* Perform an `inner merge` on the `Date` column between your adjusted COVID data and the stock price data.
+
+- 5. Creating Features and Running the Model
+* **Smoothing:** Calculate a **7-day rolling average** for new infections and a **14-day rolling average** for mortality to remove the "noise" from irregular weekend reporting.
+* **Standardization:** Convert these rolling averages into **Z-scores** (subtract the mean and divide by the standard deviation).
+* **Severity Index:** Create a custom "Severity Index" variable by weighting the Infection Z-score at 30% and the Mortality Z-score at 70%.
+* **Regression:** Use `sm.OLS()` from the `statsmodels` library. Set your `Severity_Index` and `Momentum` variables as your **X** (independent variables) and the stock's daily percentage return as your **y** (dependent variable). 
+
 
 
 
